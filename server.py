@@ -4,16 +4,15 @@ import dotenv
 import requests
 import time
 import hashlib
-import json
 from typing import Optional, Dict, Any
-
 from fastmcp import FastMCP
 
 # Load environment variables from .env file
 dotenv.load_dotenv()
 
 # Configure logging to stderr
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename=os.getenv('LOG_FILE', '/dev/stderr'))
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    filename=os.getenv('LOG_FILE', '/dev/stderr'))
 logging.getLogger("fastmcp").setLevel(logging.INFO)
 
 app = FastMCP()
@@ -24,12 +23,14 @@ DOMAIN = "https://www.foxesscloud.com"
 if not API_KEY:
     logging.error("FOXESS_API_KEY environment variable not set. The server may not function correctly.")
 
+
 def generate_signature(path: str, token: str, timestamp: int) -> str:
     """Generate signature for FoxESS API authentication."""
     # Create signature string as per API docs
     signature = fr"{path}\r\n{token}\r\n{timestamp}"
     # Generate MD5 hash
     return hashlib.md5(signature.encode('UTF-8')).hexdigest().lower()
+
 
 def make_api_request(method: str, path: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Makes a request to the FoxESS API and returns the response."""
@@ -71,6 +72,7 @@ def make_api_request(method: str, path: str, params: Optional[Dict[str, Any]] = 
         logging.error(f"An unexpected error occurred: {err}")
         return {"error": f"An unexpected error occurred: {err}"}
 
+
 # Plant endpoints
 @app.tool()
 def get_plant_list(current_page: int = 1, page_size: int = 10):
@@ -79,12 +81,14 @@ def get_plant_list(current_page: int = 1, page_size: int = 10):
     params = {'currentPage': current_page, 'pageSize': page_size}
     return make_api_request('post', path, params)
 
+
 @app.tool()
 def get_plant_detail(plant_id: str):
     """Get details of a specific plant."""
     path = '/op/v0/plant/detail'
     params = {'id': plant_id}
     return make_api_request('get', path, params)
+
 
 # Device endpoints
 @app.tool()
@@ -94,6 +98,7 @@ def get_device_list(current_page: int = 1, page_size: int = 500):
     params = {'currentPage': current_page, 'pageSize': page_size}
     return make_api_request('post', path, params)
 
+
 @app.tool()
 def get_device_detail(sn: str):
     """Get details of a specific device."""
@@ -101,18 +106,21 @@ def get_device_detail(sn: str):
     params = {'sn': sn}
     return make_api_request('get', path, params)
 
+
 @app.tool()
 def get_device_variables():
     """Get available device variables."""
     path = '/op/v0/device/variable/get'
     return make_api_request('get', path)
 
-@app.tool()
-def query_device_real_time(sn: str, variables: list):
-    """Query real-time device data."""
-    path = '/op/v0/device/real/query'
-    params = {'sn': sn, 'variables': variables}
-    return make_api_request('post', path, params)
+
+# @deprecated: Real-time data endpoint is deprecated
+# @app.tool()
+# def query_device_real_time(sn: str, variables: list):
+#     """Query real-time device data."""
+#     path = '/op/v0/device/real/query'
+#     params = {'sn': sn, 'variables': variables}
+#     return make_api_request('post', path, params)
 
 @app.tool()
 def query_device_history(sn: str, variables: list, hours: int = 24):
@@ -128,12 +136,14 @@ def query_device_history(sn: str, variables: list, hours: int = 24):
     }
     return make_api_request('post', path, params)
 
+
 @app.tool()
 def get_device_generation(sn: str):
     """Get device generation data."""
     path = '/op/v0/device/generation'
     params = {'sn': sn}
     return make_api_request('get', path, params)
+
 
 # Battery management endpoints
 @app.tool()
@@ -142,6 +152,7 @@ def get_battery_soc(sn: str):
     path = '/op/v0/device/battery/soc/get'
     params = {'sn': sn}
     return make_api_request('get', path, params)
+
 
 @app.tool()
 def set_battery_soc(sn: str, min_soc: int, min_soc_on_grid: int):
@@ -154,6 +165,7 @@ def set_battery_soc(sn: str, min_soc: int, min_soc_on_grid: int):
     }
     return make_api_request('post', path, params)
 
+
 @app.tool()
 def get_force_charge_time(sn: str):
     """Get battery force charge time settings."""
@@ -161,12 +173,14 @@ def get_force_charge_time(sn: str):
     params = {'sn': sn}
     return make_api_request('get', path, params)
 
+
 @app.tool()
 def set_force_charge_time(sn: str, config: dict):
     """Set battery force charge time settings."""
     path = '/op/v0/device/battery/forceChargeTime/set'
     params = {"sn": sn, **config}
     return make_api_request('post', path, params)
+
 
 # Module endpoints
 @app.tool()
@@ -176,12 +190,14 @@ def get_module_list(current_page: int = 1, page_size: int = 10):
     params = {'currentPage': current_page, 'pageSize': page_size}
     return make_api_request('post', path, params)
 
+
 # User endpoints
 @app.tool()
 def get_access_count():
     """Get user access count."""
     path = '/op/v0/user/getAccessCount'
     return make_api_request('get', path)
+
 
 if __name__ == '__main__':
     logging.info("Starting the FastMCP server...")
